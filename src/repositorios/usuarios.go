@@ -238,3 +238,15 @@ func (repositorio Usuarios) BuscarSeguindo(usuarioID uint64) ([]modelos.Usuario,
 	}
 	return usuarios, nil
 }
+
+func (repositorio Usuarios) AtualizarSenha(usuarioID uint64, hashSenha string) error {
+	statement, erro := repositorio.db.Prepare("update usuarios set senha = ? where id = ?")
+	if erro != nil {
+		return erro
+	}
+	defer statement.Close()
+	if _, erro := statement.Exec(hashSenha, usuarioID); erro != nil {
+		return erro
+	}
+	return nil
+}

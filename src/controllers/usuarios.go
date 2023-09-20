@@ -6,6 +6,7 @@ import (
 	"api/src/modelos"
 	"api/src/repositorios"
 	"api/src/respostas"
+	"api/src/seguranca"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -294,4 +295,45 @@ func BuscarSeguindo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respostas.JSON(w, http.StatusOK, usuarios)
+}
+
+func AtualizarSenha(w http.ResponseWriter, r *http.Request) {
+	usuarioID, erro := autenticacao.ExtrairUsuarioID(r)
+	if erro != nil {
+		respostas.Erro(w, http.StatusUnauthorized, erro)
+		return
+	}
+
+	db, erro := banco.Conectar()
+	if erro != nil {
+		respostas.Erro(w, http.StatusInternalServerError, erro)
+		return
+	}
+	defer db.Close()
+
+	corpoRequest, erro := ioutil.ReadAll(r.Body)
+	if erro != nil {
+		respostas.Erro(w, http.StatusUnprocessableEntity, erro)
+		return
+	}
+
+	var usuario modelos.Usuario
+	if erro = json.Unmarshal(corpoRequest, &usuario); erro != nil {
+		respostas.Erro(w, http.StatusBadRequest, erro)
+		return
+	}
+	senhaComHash, erro := seguranca.Hash(usuario.Senha)
+	if erro != nil {
+		respostas.Erro(w, http.StatusBadRequest, erro)
+		return
+	}
+	repositorio := repositorios.NovoRepositorioDeUsuarios(db)
+	erro = repositorio.AtualizarSenha(usuarioID, string(senhaComHash))
+
+	if erro != nil {
+		respostas.Erro(w, http.StatusInternalServerError, erro)
+		return
+	}
+	respostas.JSON(w, http.StatusNoContent, nil)
+
 }
