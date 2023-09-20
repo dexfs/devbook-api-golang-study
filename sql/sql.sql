@@ -10,3 +10,12 @@ CREATE TABLE usuarios (
     criadoEm timestamp default current_timestamp()
 ) ENGINE=InnoDB;
 
+
+CREATE TABLE seguidores (
+    usuario_id int not null,
+    foreign key (usuario_id) references usuarios(id) on delete cascade,
+    seguidor_id int not null,
+    foreign key (seguidor_id) references usuarios(id) on delete cascade,
+
+    primary key (usuario_id, seguidor_id)
+) ENGINE=InnoDB;
